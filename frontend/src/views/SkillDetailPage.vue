@@ -4,7 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
 import axios from 'axios'
 import http from '@/api/http'
-import { generateSkillCommand } from '@/utils/downloadCommand'
+import { generateSkillCommand, detectShell, shellLabels } from '@/utils/downloadCommand'
+import type { ShellType } from '@/utils/downloadCommand'
 
 interface SkillGroupInfo {
   id: string
@@ -40,6 +41,7 @@ const error = ref<string | null>(null)
 const copied = ref(false)
 const skillMdContent = ref<string | null>(null)
 const skillMdLoading = ref(false)
+const selectedShell = ref<ShellType>(detectShell())
 
 const renderedReadme = computed(() => {
   if (!skill.value?.readmeContent) return ''
@@ -49,7 +51,7 @@ const renderedReadme = computed(() => {
 const downloadCommand = computed(() => {
   if (!skill.value?.repoUrl || !skill.value?.folderPath) return ''
   const repoName = skill.value.repoUrl.split('/').pop() || ''
-  return generateSkillCommand(skill.value.repoUrl, repoName, skill.value.folderPath)
+  return generateSkillCommand(skill.value.repoUrl, repoName, skill.value.folderPath, selectedShell.value)
 })
 
 async function fetchSkill() {
@@ -217,16 +219,29 @@ onMounted(fetchSkill)
       <!-- Download Command -->
       <div v-if="downloadCommand" class="mb-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-3">下载命令</h2>
-        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
-          <div class="flex items-start justify-between gap-3">
-            <code class="text-sm text-gray-800 break-all flex-1 font-mono">{{ downloadCommand }}</code>
+        <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+          <div class="flex items-center gap-1 px-3 pt-3 pb-2">
             <button
-              class="shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
-              :class="copied ? 'bg-green-100 text-green-700' : 'bg-gray-900 text-white hover:bg-gray-800'"
-              @click="copyCommand"
+              v-for="sh in (['bash', 'powershell', 'cmd'] as ShellType[])"
+              :key="sh"
+              class="px-2.5 py-1 text-xs rounded-md transition-colors"
+              :class="selectedShell === sh ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'"
+              @click="selectedShell = sh"
             >
-              {{ copied ? '已复制' : '复制' }}
+              {{ shellLabels[sh] }}
             </button>
+          </div>
+          <div class="px-4 pb-4">
+            <div class="flex items-start justify-between gap-3">
+              <code class="text-sm text-gray-800 break-all flex-1 font-mono">{{ downloadCommand }}</code>
+              <button
+                class="shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+                :class="copied ? 'bg-green-100 text-green-700' : 'bg-gray-900 text-white hover:bg-gray-800'"
+                @click="copyCommand"
+              >
+                {{ copied ? '已复制' : '复制' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>

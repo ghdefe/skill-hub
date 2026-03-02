@@ -2,7 +2,8 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import http from '@/api/http'
-import { generateSkillCommand, generateGroupCommand } from '@/utils/downloadCommand'
+import { generateSkillCommand, generateGroupCommand, detectShell, shellLabels } from '@/utils/downloadCommand'
+import type { ShellType } from '@/utils/downloadCommand'
 import { useAuth } from '@/composables/useAuth'
 
 interface SkillSummary {
@@ -38,7 +39,7 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const batchCopied = ref(false)
 const skillCopiedMap = ref<Record<string, boolean>>({})
-
+const selectedShell = ref<ShellType>(detectShell())
 // Inline editing state
 const editing = ref(false)
 const editName = ref('')
@@ -63,12 +64,12 @@ const activeSkills = computed(() => {
 const batchCommand = computed(() => {
   if (!group.value?.repoUrl || activeSkills.value.length === 0) return ''
   const paths = activeSkills.value.map(s => s.folderPath)
-  return generateGroupCommand(group.value.repoUrl, repoName.value, paths)
+  return generateGroupCommand(group.value.repoUrl, repoName.value, paths, selectedShell.value)
 })
 
 function skillCommand(skill: SkillSummary): string {
   if (!group.value?.repoUrl) return ''
-  return generateSkillCommand(group.value.repoUrl, repoName.value, skill.folderPath)
+  return generateSkillCommand(group.value.repoUrl, repoName.value, skill.folderPath, selectedShell.value)
 }
 
 async function fetchGroup() {
@@ -311,17 +312,30 @@ onMounted(fetchGroup)
       <!-- Batch Download Command -->
       <div v-if="batchCommand" class="mb-6">
         <h2 class="text-lg font-semibold text-gray-900 mb-3">批量下载命令</h2>
-        <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
-          <div class="flex items-start justify-between gap-3">
-            <code class="text-sm text-gray-800 break-all flex-1 font-mono">{{ batchCommand }}</code>
+        <div class="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
+          <div class="flex items-center gap-1 px-3 pt-3 pb-2">
             <button
-              class="shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
-              :class="batchCopied ? 'bg-green-100 text-green-700' : 'bg-gray-900 text-white hover:bg-gray-800'"
-              data-testid="batch-copy-btn"
-              @click="copyBatchCommand"
+              v-for="sh in (['bash', 'powershell', 'cmd'] as ShellType[])"
+              :key="sh"
+              class="px-2.5 py-1 text-xs rounded-md transition-colors"
+              :class="selectedShell === sh ? 'bg-gray-900 text-white' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-200'"
+              @click="selectedShell = sh"
             >
-              {{ batchCopied ? '已复制' : '复制' }}
+              {{ shellLabels[sh] }}
             </button>
+          </div>
+          <div class="px-4 pb-4">
+            <div class="flex items-start justify-between gap-3">
+              <code class="text-sm text-gray-800 break-all flex-1 font-mono">{{ batchCommand }}</code>
+              <button
+                class="shrink-0 px-3 py-1.5 text-xs font-medium rounded-md transition-colors"
+                :class="batchCopied ? 'bg-green-100 text-green-700' : 'bg-gray-900 text-white hover:bg-gray-800'"
+                data-testid="batch-copy-btn"
+                @click="copyBatchCommand"
+              >
+                {{ batchCopied ? '已复制' : '复制' }}
+              </button>
+            </div>
           </div>
         </div>
       </div>
