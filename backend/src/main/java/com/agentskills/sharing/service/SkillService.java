@@ -205,8 +205,11 @@ public class SkillService {
     private PageResponse<SkillListResponse> searchByFts(
             String query, List<String> tagList, String sort, String order, int page, int pageSize) {
 
-        // FTS5 search returns all matching results (native query, no Spring pagination)
+        // FTS search first, fall back to fuzzy ILIKE if no results
         List<Skill> ftsResults = skillRepository.searchByFts(query);
+        if (ftsResults.isEmpty()) {
+            ftsResults = skillRepository.searchByFuzzy(query);
+        }
 
         // Apply tag filtering if needed
         if (!tagList.isEmpty()) {

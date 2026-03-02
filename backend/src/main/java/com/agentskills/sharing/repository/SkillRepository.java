@@ -37,6 +37,16 @@ public interface SkillRepository extends JpaRepository<Skill, String> {
             nativeQuery = true)
     List<Skill> searchByFts(@Param("query") String query);
 
+    /**
+     * Fuzzy search using ILIKE on name and description.
+     */
+    @Query(value = "SELECT s.* FROM skills s "
+            + "WHERE s.status = 'ACTIVE' "
+            + "AND (LOWER(s.name) LIKE LOWER(CONCAT('%', :query, '%')) "
+            + "OR LOWER(s.description) LIKE LOWER(CONCAT('%', :query, '%')))",
+            nativeQuery = true)
+    List<Skill> searchByFuzzy(@Param("query") String query);
+
     @Query("SELECT s FROM Skill s WHERE s.status = :status "
             + "AND s.id IN (SELECT sk.id FROM Skill sk JOIN sk.tags t WHERE t.name IN :tagNames "
             + "GROUP BY sk.id HAVING COUNT(DISTINCT t.name) = :tagCount)")
