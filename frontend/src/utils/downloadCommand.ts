@@ -18,7 +18,9 @@ export function generateSkillCommand(
   repoName: string,
   folderPath: string,
 ): string {
-  return `git clone --filter=blob:none --no-checkout --depth=1 ${repoUrl} && cd ${repoName} && git sparse-checkout init --no-cone && git sparse-checkout set ${folderPath} && git checkout`
+  const tmp = `.skillhub-tmp-${repoName}`
+  const skillName = folderPath.split('/').pop()!
+  return `git clone --filter=blob:none --no-checkout --depth=1 ${repoUrl} ${tmp} && cd ${tmp} && git sparse-checkout init --no-cone && git sparse-checkout set ${folderPath} && git checkout && cp -r ${folderPath} ../${skillName} && cd .. && rm -rf ${tmp}`
 }
 
 /**
@@ -36,6 +38,13 @@ export function generateGroupCommand(
   repoName: string,
   folderPaths: string[],
 ): string {
+  const tmp = `.skillhub-tmp-${repoName}`
   const paths = folderPaths.join(' ')
-  return `git clone --filter=blob:none --no-checkout --depth=1 ${repoUrl} && cd ${repoName} && git sparse-checkout init --no-cone && git sparse-checkout set ${paths} && git checkout`
+  const copyParts = folderPaths
+    .map(p => {
+      const name = p.split('/').pop()!
+      return `cp -r ${p} ../${name}`
+    })
+    .join(' && ')
+  return `git clone --filter=blob:none --no-checkout --depth=1 ${repoUrl} ${tmp} && cd ${tmp} && git sparse-checkout init --no-cone && git sparse-checkout set ${paths} && git checkout && ${copyParts} && cd .. && rm -rf ${tmp}`
 }

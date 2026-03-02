@@ -87,11 +87,13 @@ function goToSkills() {
       <h2 class="text-xl font-semibold text-gray-900 mb-3">示例命令</h2>
       <div class="bg-gray-50 rounded-lg border border-gray-200 p-4">
         <code class="text-sm text-gray-800 font-mono break-all leading-relaxed">
-          git clone --filter=blob:none --no-checkout --depth=1 https://github.com/user/repo
-          && cd repo
+          git clone --filter=blob:none --no-checkout --depth=1 https://github.com/user/repo .skillhub-tmp-repo
+          && cd .skillhub-tmp-repo
           && git sparse-checkout init --no-cone
           && git sparse-checkout set skills/my-skill
           && git checkout
+          && cp -r skills/my-skill ../my-skill
+          && cd .. && rm -rf .skillhub-tmp-repo
         </code>
       </div>
       <p class="text-xs text-gray-400 mt-2">只需要安装 git，无需其他依赖</p>

@@ -104,11 +104,13 @@ cd frontend && npm run test
 平台为每个 Skill 生成 git sparse-checkout 命令，用户只需复制并执行即可精准拉取目标文件夹：
 
 ```bash
-git clone --filter=blob:none --no-checkout --depth=1 https://github.com/user/repo \
-  && cd repo \
+git clone --filter=blob:none --no-checkout --depth=1 https://github.com/user/repo .skillhub-tmp-repo \
+  && cd .skillhub-tmp-repo \
   && git sparse-checkout init --no-cone \
   && git sparse-checkout set skills/my-skill \
-  && git checkout
+  && git checkout \
+  && cp -r skills/my-skill ../my-skill \
+  && cd .. && rm -rf .skillhub-tmp-repo
 ```
 
 也支持批量下载整个 Skill Group 中的所有 Skills。
