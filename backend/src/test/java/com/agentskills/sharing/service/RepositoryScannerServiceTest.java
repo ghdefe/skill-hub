@@ -165,7 +165,7 @@ class RepositoryScannerServiceTest {
 
         // Repo info
         when(gitHubApiClient.getRepoInfo("owner", "my-repo", "real-token"))
-                .thenReturn(new GitHubRepoInfo(42, 7));
+                .thenReturn(new GitHubRepoInfo(42, 7, "main"));
 
         // No existing repo/group/skill
         when(repositoryRepository.findByUserIdAndGithubOwnerAndGithubRepo("user-1", "owner", "my-repo"))
@@ -228,7 +228,7 @@ class RepositoryScannerServiceTest {
                 .thenReturn("# Simple Skill\nThis is a simple skill.");
 
         when(gitHubApiClient.getRepoInfo("owner", "repo", "real-token"))
-                .thenReturn(new GitHubRepoInfo(10, 2));
+                .thenReturn(new GitHubRepoInfo(10, 2, "main"));
 
         when(repositoryRepository.findByUserIdAndGithubOwnerAndGithubRepo("user-1", "owner", "repo"))
                 .thenReturn(Optional.empty());
@@ -269,7 +269,7 @@ class RepositoryScannerServiceTest {
                 .thenThrow(new GitHubApiException("Not found", 404));
 
         when(gitHubApiClient.getRepoInfo("owner", "repo", "real-token"))
-                .thenReturn(new GitHubRepoInfo(0, 0));
+                .thenReturn(new GitHubRepoInfo(0, 0, "main"));
 
         when(repositoryRepository.findByUserIdAndGithubOwnerAndGithubRepo("user-1", "owner", "repo"))
                 .thenReturn(Optional.empty());
@@ -309,7 +309,7 @@ class RepositoryScannerServiceTest {
                 .thenThrow(new GitHubApiException("Not found", 404));
 
         when(gitHubApiClient.getRepoInfo("owner", "repo", "real-token"))
-                .thenReturn(new GitHubRepoInfo(5, 1));
+                .thenReturn(new GitHubRepoInfo(5, 1, "main"));
 
         when(repositoryRepository.findByUserIdAndGithubOwnerAndGithubRepo("user-1", "owner", "repo"))
                 .thenReturn(Optional.empty());
@@ -348,7 +348,7 @@ class RepositoryScannerServiceTest {
         when(gitHubApiClient.getFileContent(anyString(), anyString(), anyString(), anyString()))
                 .thenThrow(new GitHubApiException("Not found", 404));
         when(gitHubApiClient.getRepoInfo("owner", "repo", "real-token"))
-                .thenReturn(new GitHubRepoInfo(5, 1));
+                .thenReturn(new GitHubRepoInfo(5, 1, "main"));
 
         // Existing repo and group
         Repository existingRepo = new Repository();
@@ -419,7 +419,7 @@ class RepositoryScannerServiceTest {
         when(gitHubApiClient.getFileContent(anyString(), anyString(), anyString(), anyString()))
                 .thenThrow(new GitHubApiException("Not found", 404));
         when(gitHubApiClient.getRepoInfo("owner", "repo", "real-token"))
-                .thenReturn(new GitHubRepoInfo(5, 1));
+                .thenReturn(new GitHubRepoInfo(5, 1, "main"));
 
         Repository existingRepo = new Repository();
         existingRepo.setId("repo-1");
@@ -480,7 +480,7 @@ class RepositoryScannerServiceTest {
         when(gitHubApiClient.getFileContent(anyString(), anyString(), anyString(), anyString()))
                 .thenThrow(new GitHubApiException("Not found", 404));
         when(gitHubApiClient.getRepoInfo("owner", "repo2", "real-token"))
-                .thenReturn(new GitHubRepoInfo(0, 0));
+                .thenReturn(new GitHubRepoInfo(0, 0, "main"));
 
         Repository repo2 = new Repository();
         repo2.setId("repo-2");

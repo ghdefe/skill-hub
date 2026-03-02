@@ -21,6 +21,7 @@ public record SkillDetailResponse(
         String repoUrl,
         String folderPath,
         SkillGroupInfo skillGroup,
+        String skillMdUrl,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {
@@ -69,8 +70,10 @@ public record SkillDetailResponse(
                 repoUrl,
                 skill.getFolderPath(),
                 groupInfo,
+                skill.getSkillMdUrl(),
                 skill.getCreatedAt(),
                 skill.getUpdatedAt()
         );
     }
 }
+

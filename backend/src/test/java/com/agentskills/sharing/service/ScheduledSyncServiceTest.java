@@ -54,7 +54,7 @@ class ScheduledSyncServiceTest {
         when(repositoryRepository.findAll()).thenReturn(List.of(repo));
         when(encryptionUtil.decrypt("encrypted-token-1")).thenReturn("plain-token-1");
         when(gitHubApiClient.getRepoInfo("owner1", "repo1", "plain-token-1"))
-                .thenReturn(new GitHubRepoInfo(42, 7));
+                .thenReturn(new GitHubRepoInfo(42, 7, "main"));
 
         scheduledSyncService.syncAllRepositoryStats();
 
@@ -74,9 +74,9 @@ class ScheduledSyncServiceTest {
         when(encryptionUtil.decrypt("enc-1")).thenReturn("token-1");
         when(encryptionUtil.decrypt("enc-2")).thenReturn("token-2");
         when(gitHubApiClient.getRepoInfo("owner1", "repo1", "token-1"))
-                .thenReturn(new GitHubRepoInfo(10, 2));
+                .thenReturn(new GitHubRepoInfo(10, 2, "main"));
         when(gitHubApiClient.getRepoInfo("owner2", "repo2", "token-2"))
-                .thenReturn(new GitHubRepoInfo(100, 50));
+                .thenReturn(new GitHubRepoInfo(100, 50, "main"));
 
         scheduledSyncService.syncAllRepositoryStats();
 
@@ -95,7 +95,7 @@ class ScheduledSyncServiceTest {
         when(encryptionUtil.decrypt("enc-1")).thenThrow(new RuntimeException("Decryption failed"));
         when(encryptionUtil.decrypt("enc-2")).thenReturn("token-2");
         when(gitHubApiClient.getRepoInfo("owner2", "repo2", "token-2"))
-                .thenReturn(new GitHubRepoInfo(55, 11));
+                .thenReturn(new GitHubRepoInfo(55, 11, "main"));
 
         scheduledSyncService.syncAllRepositoryStats();
 
@@ -125,7 +125,7 @@ class ScheduledSyncServiceTest {
         Repository repo = createRepository("myOwner", "myRepo", "encrypted-access");
         when(encryptionUtil.decrypt("encrypted-access")).thenReturn("decrypted-access");
         when(gitHubApiClient.getRepoInfo("myOwner", "myRepo", "decrypted-access"))
-                .thenReturn(new GitHubRepoInfo(200, 30));
+                .thenReturn(new GitHubRepoInfo(200, 30, "main"));
 
         scheduledSyncService.syncRepositoryStats(repo);
 

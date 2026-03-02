@@ -33,7 +33,7 @@ class SkillControllerTest {
 
     @Test
     void listSkills_shouldDelegateToServiceAndReturn200() {
-        var item = new SkillListResponse("s1", "Test", "desc", "user", 10, 5, 2, List.of("nlp"), LocalDateTime.now());
+        var item = new SkillListResponse("s1", "Test", "desc", "user", 10, 5, 2, List.of("nlp"), null, LocalDateTime.now());
         var pageResponse = new PageResponse<>(List.of(item), 1L, 1, 20);
 
         when(skillService.listSkills("agent", "nlp", "downloads", "desc", 1, 20))
@@ -66,7 +66,7 @@ class SkillControllerTest {
                 "s1", "Test", "desc", "# README", "user", 10, 5, 2,
                 List.of("nlp"), "https://github.com/o/r", "skills/test",
                 new SkillDetailResponse.SkillGroupInfo("g1", "group", "desc"),
-                LocalDateTime.now(), LocalDateTime.now());
+                null, LocalDateTime.now(), LocalDateTime.now());
 
         when(skillService.getSkillDetail("s1")).thenReturn(detail);
 

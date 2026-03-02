@@ -52,6 +52,9 @@ public class Repository {
     @Column(name = "webhook_secret")
     private String webhookSecret;
 
+    @Column(name = "default_branch")
+    private String defaultBranch;
+
     @Column(name = "last_synced_at")
     private LocalDateTime lastSyncedAt;
 

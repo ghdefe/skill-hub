@@ -82,7 +82,7 @@ class GitHubApiClientTest {
     @Test
     void getRepoInfo_returnsStarAndForkCounts() {
         String json = """
-                {"stargazers_count": 42, "forks_count": 7}
+                {"stargazers_count": 42, "forks_count": 7, "default_branch": "main"}
                 """;
         mockWebServer.enqueue(new MockResponse()
                 .setBody(json)
@@ -93,6 +93,7 @@ class GitHubApiClientTest {
 
         assertThat(info.stargazersCount()).isEqualTo(42);
         assertThat(info.forksCount()).isEqualTo(7);
+        assertThat(info.defaultBranch()).isEqualTo("main");
     }
 
     @Test

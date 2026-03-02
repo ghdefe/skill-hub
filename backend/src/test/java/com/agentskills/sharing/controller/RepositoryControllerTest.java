@@ -214,7 +214,7 @@ class RepositoryControllerTest {
         when(encryptionUtil.decrypt(null))
                 .thenReturn("fake-token");
         when(gitHubApiClient.getRepoInfo("owner", "my-repo", "fake-token"))
-                .thenReturn(new GitHubRepoInfo(100, 20));
+                .thenReturn(new GitHubRepoInfo(100, 20, "main"));
         when(repositoryRepository.save(testRepo))
                 .thenReturn(testRepo);
         when(skillGroupRepository.findByRepositoryId("repo-1"))

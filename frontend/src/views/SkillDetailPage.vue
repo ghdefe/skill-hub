@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { marked } from 'marked'
+import axios from 'axios'
 import http from '@/api/http'
 import { generateSkillCommand } from '@/utils/downloadCommand'
 
@@ -24,6 +25,7 @@ interface SkillDetail {
   repoUrl: string | null
   folderPath: string
   skillGroup: SkillGroupInfo | null
+  skillMdUrl: string | null
   createdAt: string
   updatedAt: string
 }
@@ -36,6 +38,8 @@ const skill = ref<SkillDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const copied = ref(false)
+const skillMdContent = ref<string | null>(null)
+const skillMdLoading = ref(false)
 
 const renderedReadme = computed(() => {
   if (!skill.value?.readmeContent) return ''
@@ -54,6 +58,9 @@ async function fetchSkill() {
   try {
     const { data } = await http.get<SkillDetail>(`/skills/${skillId}`)
     skill.value = data
+    if (data.skillMdUrl) {
+      fetchSkillMd(data.skillMdUrl)
+    }
   } catch (e: any) {
     if (e.response?.status === 404) {
       error.value = '未找到该 Skill'
@@ -62,6 +69,19 @@ async function fetchSkill() {
     }
   } finally {
     loading.value = false
+  }
+}
+
+async function fetchSkillMd(url: string) {
+  skillMdLoading.value = true
+  try {
+    const { data } = await axios.get<string>(url, { timeout: 10000 })
+    skillMdContent.value = data
+  } catch {
+    // Silently fail — README is still available as fallback
+    skillMdContent.value = null
+  } finally {
+    skillMdLoading.value = false
   }
 }
 
@@ -223,6 +243,22 @@ onMounted(fetchSkill)
             {{ tag }}
           </span>
         </div>
+      </div>
+
+      <!-- SKILL.md Content -->
+      <div v-if="skillMdLoading" class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">Skill 详情</h2>
+        <div class="bg-white rounded-lg border border-gray-200 p-6 text-center text-gray-400">
+          <svg class="animate-spin h-5 w-5 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          加载中...
+        </div>
+      </div>
+      <div v-else-if="skillMdContent" class="mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-3">Skill 详情</h2>
+        <pre class="bg-white rounded-lg border border-gray-200 p-6 text-sm text-gray-800 font-mono whitespace-pre-wrap break-words overflow-auto max-h-[600px]">{{ skillMdContent }}</pre>
       </div>
 
       <!-- README Content -->

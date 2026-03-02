@@ -17,6 +17,7 @@ public record SkillListResponse(
         int starCount,
         int forkCount,
         List<String> tags,
+        String skillMdUrl,
         LocalDateTime createdAt
 ) {
 
@@ -42,6 +43,7 @@ public record SkillListResponse(
                 starCount,
                 forkCount,
                 tagNames,
+                skill.getSkillMdUrl(),
                 skill.getCreatedAt()
         );
     }

@@ -67,6 +67,9 @@ public class Skill {
     @Column(name = "updated_at", nullable = false)
     private LocalDateTime updatedAt;
 
+    @Column(name = "skill_md_url", length = 1024)
+    private String skillMdUrl;
+
     @ManyToMany
     @JoinTable(
             name = "skill_tags",

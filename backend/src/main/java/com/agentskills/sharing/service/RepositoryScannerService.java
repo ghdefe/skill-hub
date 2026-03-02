@@ -2,6 +2,7 @@ package com.agentskills.sharing.service;
 
 import com.agentskills.sharing.dto.GitHubContentItem;
 import com.agentskills.sharing.dto.GitHubRepoInfo;
+import com.agentskills.sharing.dto.SkillMdMetadata;
 import com.agentskills.sharing.entity.Repository;
 import com.agentskills.sharing.entity.Skill;
 import com.agentskills.sharing.entity.SkillGroup;
@@ -102,14 +103,19 @@ public class RepositoryScannerService {
                     return newRepo;
                 });
 
-        // 6. Get repo info (star/fork counts) and update
+        // 6. Get repo info (star/fork counts, default branch) and update
+        String defaultBranch = "main";
         try {
             GitHubRepoInfo repoInfo = gitHubApiClient.getRepoInfo(owner, repo, token);
             repoEntity.setStarCount(repoInfo.stargazersCount());
             repoEntity.setForkCount(repoInfo.forksCount());
+            if (repoInfo.defaultBranch() != null) {
+                defaultBranch = repoInfo.defaultBranch();
+            }
         } catch (Exception e) {
             log.warn("Failed to fetch repo info for {}/{}: {}", owner, repo, e.getMessage());
         }
+        repoEntity.setDefaultBranch(defaultBranch);
         repoEntity.setLastSyncedAt(LocalDateTime.now());
         Repository savedRepo = repositoryRepository.save(repoEntity);
 
@@ -129,7 +135,7 @@ public class RepositoryScannerService {
         for (GitHubContentItem dir : subDirs) {
             String folderPath = "skills/" + dir.name();
             scannedFolderPaths.add(folderPath);
-            parseAndCreateSkill(dir, owner, repo, token, skillGroup, user);
+            parseAndCreateSkill(dir, owner, repo, token, skillGroup, user, defaultBranch);
         }
 
         // 9. Diff detection: mark skills that are no longer in the scan as REMOVED
@@ -173,24 +179,34 @@ public class RepositoryScannerService {
     }
 
     /**
-     * Parse a single skill subdirectory: read manifest and README, then create/update Skill entity.
+     * Parse a single skill subdirectory: read SKILL.md, manifest and README, then create/update Skill entity.
      */
     private void parseAndCreateSkill(GitHubContentItem dir, String owner, String repo,
-                                     String token, SkillGroup skillGroup, User user) {
+                                     String token, SkillGroup skillGroup, User user,
+                                     String defaultBranch) {
         String folderName = dir.name();
         String folderPath = "skills/" + folderName;
 
-        // Try to read manifest (json first, then yaml)
-        ManifestData manifest = readManifest(owner, repo, folderPath, token);
+        // 1. Try to read and parse SKILL.md
+        SkillMdMetadata skillMd = readSkillMd(owner, repo, folderPath, token);
+
+        // 2. Generate Raw File URL only when SKILL.md exists (metadata is not EMPTY)
+        String skillMdUrl = (skillMd != SkillMdMetadata.EMPTY)
+                ? buildSkillMdUrl(owner, repo, defaultBranch, folderPath)
+                : null;
+
+        // 3. If SKILL.md doesn't provide complete metadata, fall back to manifest
+        ManifestData manifest = null;
+        if (!skillMd.hasName() || !skillMd.hasDescription()) {
+            manifest = readManifest(owner, repo, folderPath, token);
+        }
 
         // Try to read README.md
         String readmeContent = readReadme(owner, repo, folderPath, token);
 
-        // Determine skill name and description
-        String skillName = (manifest != null && manifest.name != null && !manifest.name.isBlank())
-                ? manifest.name : folderName;
-        String description = (manifest != null && manifest.description != null && !manifest.description.isBlank())
-                ? manifest.description : extractFirstLine(readmeContent);
+        // 4. Resolve name and description using priority chain
+        String skillName = resolveSkillName(skillMd, manifest, folderName);
+        String description = resolveDescription(skillMd, manifest, readmeContent);
 
         // Create or update Skill
         Skill skill = skillRepository.findByUserIdAndName(user.getId(), skillName)
@@ -213,6 +229,7 @@ public class RepositoryScannerService {
         skill.setReadmeContent(readmeContent);
         skill.setFolderPath(folderPath);
         skill.setStatus(SkillStatus.ACTIVE);
+        skill.setSkillMdUrl(skillMdUrl);
 
         // Handle tags
         if (manifest != null && manifest.tags != null && !manifest.tags.isEmpty()) {
@@ -291,6 +308,57 @@ public class RepositoryScannerService {
             log.warn("Failed to read README at {}/README.md: {}", folderPath, e.getMessage());
         }
         return null;
+    }
+
+    /**
+     * Try to read and parse SKILL.md from a skill folder.
+     * Returns SkillMdMetadata.EMPTY if the file does not exist or cannot be parsed.
+     */
+    private SkillMdMetadata readSkillMd(String owner, String repo, String folderPath, String token) {
+        try {
+            String content = gitHubApiClient.getFileContent(owner, repo, folderPath + "/SKILL.md", token);
+            return SkillMdParser.parse(content);
+        } catch (GitHubApiException e) {
+            if (e.getStatusCode() != 404) {
+                log.warn("Error reading SKILL.md at {}/SKILL.md: {}", folderPath, e.getMessage());
+            }
+        } catch (Exception e) {
+            log.warn("Failed to read SKILL.md at {}/SKILL.md: {}", folderPath, e.getMessage());
+        }
+        return SkillMdMetadata.EMPTY;
+    }
+
+    /**
+     * Build the raw GitHub URL for a SKILL.md file.
+     */
+    private String buildSkillMdUrl(String owner, String repo, String defaultBranch, String folderPath) {
+        return "https://raw.githubusercontent.com/" + owner + "/" + repo + "/" + defaultBranch + "/" + folderPath + "/SKILL.md";
+    }
+
+    /**
+     * Resolve skill name using priority chain: SKILL.md > manifest > folder name.
+     */
+    private String resolveSkillName(SkillMdMetadata skillMd, ManifestData manifest, String folderName) {
+        if (skillMd.hasName()) {
+            return skillMd.name();
+        }
+        if (manifest != null && manifest.name != null && !manifest.name.isBlank()) {
+            return manifest.name;
+        }
+        return folderName;
+    }
+
+    /**
+     * Resolve description using priority chain: SKILL.md > manifest > README first line.
+     */
+    private String resolveDescription(SkillMdMetadata skillMd, ManifestData manifest, String readmeContent) {
+        if (skillMd.hasDescription()) {
+            return skillMd.description();
+        }
+        if (manifest != null && manifest.description != null && !manifest.description.isBlank()) {
+            return manifest.description;
+        }
+        return extractFirstLine(readmeContent);
     }
 
     /**

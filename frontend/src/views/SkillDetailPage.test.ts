@@ -10,13 +10,21 @@ vi.mock('@/api/http', () => ({
   },
 }))
 
+vi.mock('axios', () => ({
+  default: {
+    get: vi.fn(),
+  },
+}))
+
 vi.mock('marked', () => ({
   marked: (md: string) => `<p>${md}</p>`,
 }))
 
 import http from '@/api/http'
+import axios from 'axios'
 
 const mockHttp = vi.mocked(http)
+const mockAxiosGet = vi.mocked(axios.get)
 
 const mockSkill = {
   id: 's1',
@@ -31,6 +39,7 @@ const mockSkill = {
   repoUrl: 'https://github.com/testuser/my-repo',
   folderPath: 'skills/my-agent-skill',
   skillGroup: { id: 'g1', name: 'my-repo', description: 'A repo group' },
+  skillMdUrl: null,
   createdAt: '2024-01-01T00:00:00',
   updatedAt: '2024-06-01T00:00:00',
 }
@@ -228,5 +237,60 @@ describe('SkillDetailPage', () => {
     await flushPromises()
 
     expect(mockHttp.post).toHaveBeenCalledWith('/skills/s1/copy-event')
+  })
+
+  it('fetches and renders SKILL.md content as raw text when skillMdUrl is present', async () => {
+    const skillWithMdUrl = { ...mockSkill, skillMdUrl: 'https://raw.githubusercontent.com/testuser/my-repo/main/skills/my-agent-skill/SKILL.md' }
+    mockHttp.get.mockResolvedValue({ data: skillWithMdUrl })
+    mockAxiosGet.mockResolvedValue({ data: '# Skill Details\nThis is the SKILL.md content' })
+
+    const router = createTestRouter()
+    await router.push('/skills/s1')
+    await router.isReady()
+
+    const wrapper = mount(SkillDetailPage, { global: { plugins: [router] } })
+    await flushPromises()
+
+    expect(mockAxiosGet).toHaveBeenCalledWith(
+      'https://raw.githubusercontent.com/testuser/my-repo/main/skills/my-agent-skill/SKILL.md',
+      { timeout: 10000 }
+    )
+    expect(wrapper.text()).toContain('Skill 详情')
+    // Raw text, not rendered as HTML
+    const pre = wrapper.find('pre')
+    expect(pre.exists()).toBe(true)
+    expect(pre.text()).toContain('# Skill Details')
+    expect(pre.text()).toContain('This is the SKILL.md content')
+  })
+
+  it('does not fetch SKILL.md when skillMdUrl is null', async () => {
+    mockHttp.get.mockResolvedValue({ data: mockSkill })
+
+    const router = createTestRouter()
+    await router.push('/skills/s1')
+    await router.isReady()
+
+    const wrapper = mount(SkillDetailPage, { global: { plugins: [router] } })
+    await flushPromises()
+
+    expect(mockAxiosGet).not.toHaveBeenCalled()
+    expect(wrapper.text()).not.toContain('Skill 详情')
+  })
+
+  it('falls back gracefully when SKILL.md fetch fails', async () => {
+    const skillWithMdUrl = { ...mockSkill, skillMdUrl: 'https://raw.githubusercontent.com/testuser/my-repo/main/skills/my-agent-skill/SKILL.md' }
+    mockHttp.get.mockResolvedValue({ data: skillWithMdUrl })
+    mockAxiosGet.mockRejectedValue(new Error('Network Error'))
+
+    const router = createTestRouter()
+    await router.push('/skills/s1')
+    await router.isReady()
+
+    const wrapper = mount(SkillDetailPage, { global: { plugins: [router] } })
+    await flushPromises()
+
+    // Should not show SKILL.md section, but README should still be visible
+    expect(wrapper.text()).not.toContain('Skill 详情')
+    expect(wrapper.text()).toContain('README')
   })
 })

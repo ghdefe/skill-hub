@@ -47,7 +47,7 @@ class AuthControllerTest {
         var response = new MockHttpServletResponse();
         authController.githubLogin(response);
 
-        assertThat(response.getRedirectedUrl()).isEqualTo("/oauth2/authorization/github");
+        assertThat(response.getRedirectedUrl()).isEqualTo("http://localhost:18123/oauth2/authorization/github");
     }
 
     @Test

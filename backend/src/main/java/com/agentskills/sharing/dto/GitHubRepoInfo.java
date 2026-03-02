@@ -7,6 +7,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  */
 public record GitHubRepoInfo(
         @JsonProperty("stargazers_count") int stargazersCount,
-        @JsonProperty("forks_count") int forksCount
+        @JsonProperty("forks_count") int forksCount,
+        @JsonProperty("default_branch") String defaultBranch
 ) {
 }
