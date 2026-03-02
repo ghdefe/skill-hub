@@ -19,6 +19,11 @@ const router = createRouter({
       component: () => import('@/views/SkillGroupDetailPage.vue'),
     },
     {
+      path: '/about',
+      name: 'About',
+      component: () => import('@/views/AboutPage.vue'),
+    },
+    {
       path: '/auth/callback',
       name: 'AuthCallback',
       component: () => import('@/views/AuthCallbackPage.vue'),

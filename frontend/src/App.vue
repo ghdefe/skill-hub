@@ -13,9 +13,15 @@ onMounted(checkAuth)
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between h-16 items-center">
           <router-link to="/" class="text-xl font-bold text-gray-900">
-            Agent Skills
+            SkillHub
           </router-link>
           <div class="flex items-center gap-4">
+            <router-link
+              to="/about"
+              class="text-gray-600 hover:text-gray-900 text-sm"
+            >
+              关于
+            </router-link>
             <router-link
               v-if="isLoggedIn"
               to="/repositories"

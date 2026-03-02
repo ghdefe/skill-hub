@@ -29,6 +29,14 @@ interface TagItem {
 
 const router = useRouter()
 
+// Banner
+const showBanner = ref(!localStorage.getItem('skillhub-banner-dismissed'))
+
+function dismissBanner() {
+  showBanner.value = false
+  localStorage.setItem('skillhub-banner-dismissed', '1')
+}
+
 // State
 const skills = ref<SkillItem[]>([])
 const total = ref(0)
@@ -162,6 +170,34 @@ onMounted(() => {
 
 <template>
   <div>
+    <!-- Quick Start Banner -->
+    <div v-if="showBanner" class="bg-gray-900 text-white rounded-lg p-4 mb-6 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3 min-w-0">
+        <span class="text-lg shrink-0">🔥</span>
+        <div class="min-w-0">
+          <p class="text-sm font-medium">SkillHub — 一行命令获取 AI Agent 技能</p>
+          <p class="text-xs text-gray-400 mt-0.5">只需 git，跨平台可用 · 深度结合 GitHub · 标准化格式一键导入</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <router-link
+          to="/about"
+          class="px-3 py-1.5 text-xs font-medium bg-white text-gray-900 rounded-md hover:bg-gray-100 transition-colors"
+        >
+          了解更多
+        </router-link>
+        <button
+          class="p-1 text-gray-400 hover:text-white transition-colors"
+          title="关闭"
+          @click="dismissBanner"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+
     <h1 class="text-2xl font-bold text-gray-900 mb-6">Skills</h1>
 
     <!-- Search Bar -->

@@ -18,7 +18,7 @@ export function generateSkillCommand(
   repoName: string,
   folderPath: string,
 ): string {
-  return `git clone --filter=blob:none --sparse --depth=1 ${repoUrl} && cd ${repoName} && git sparse-checkout set ${folderPath}`
+  return `git clone --filter=blob:none --no-checkout --depth=1 ${repoUrl} && cd ${repoName} && git sparse-checkout init --no-cone && git sparse-checkout set ${folderPath} && git checkout`
 }
 
 /**
@@ -37,5 +37,5 @@ export function generateGroupCommand(
   folderPaths: string[],
 ): string {
   const paths = folderPaths.join(' ')
-  return `git clone --filter=blob:none --sparse --depth=1 ${repoUrl} && cd ${repoName} && git sparse-checkout set ${paths}`
+  return `git clone --filter=blob:none --no-checkout --depth=1 ${repoUrl} && cd ${repoName} && git sparse-checkout init --no-cone && git sparse-checkout set ${paths} && git checkout`
 }

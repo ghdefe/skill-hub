@@ -14,8 +14,8 @@
     <groupId>com.agentskills</groupId>
     <artifactId>agent-skills-sharing</artifactId>
     <version>0.0.1-SNAPSHOT</version>
-    <name>Agent Skills Sharing Platform</name>
-    <description>A web platform for sharing and discovering Agent Skills</description>
+    <name>SkillHub</name>
+    <description>AI Agent Skills sharing and discovery platform</description>
 
     <properties>
         <java.version>17</java.version>

@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: agent-skills-sharing
+    name: skillhub
 
   # H2 in-memory database for tests (PostgreSQL compatibility mode)
   datasource:

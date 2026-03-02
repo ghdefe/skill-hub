@@ -13,7 +13,7 @@ logging:
 
 spring:
   application:
-    name: agent-skills-sharing
+    name: skillhub
 
   # PostgreSQL Datasource
   datasource:

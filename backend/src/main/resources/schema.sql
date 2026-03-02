@@ -1,5 +1,5 @@
 -- ============================================================
--- Agent Skills Sharing Platform - PostgreSQL-specific objects
+-- SkillHub - PostgreSQL-specific objects
 -- JPA handles entity tables via ddl-auto: update;
 -- this script handles full-text search index (GIN + tsvector).
 -- ============================================================
