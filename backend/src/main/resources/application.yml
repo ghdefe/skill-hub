@@ -1,0 +1,78 @@
+server:
+  port: 18123
+  servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+logging:
+  charset:
+    console: UTF-8
+    file: UTF-8
+
+spring:
+  application:
+    name: agent-skills-sharing
+
+  # PostgreSQL Datasource
+  datasource:
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/skills_sharing}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false
+    open-in-view: false
+    defer-datasource-initialization: true
+
+  # Run schema.sql after JPA creates entity tables (for full-text search index)
+  sql:
+    init:
+      mode: always
+
+  # Caffeine Cache
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=500,expireAfterWrite=10m
+
+  # GitHub OAuth2 Client
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${GITHUB_CLIENT_ID:REMOVED}
+            client-secret: ${GITHUB_CLIENT_SECRET:REMOVED}
+            scope: read:user,repo
+        provider:
+          github:
+            authorization-uri: https://github.com/login/oauth/authorize
+            token-uri: https://github.com/login/oauth/access_token
+            user-info-uri: https://api.github.com/user
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:default-dev-secret-key-change-in-production-must-be-at-least-256-bits}
+  expiration-days: 7
+
+# GitHub API
+github:
+  api:
+    base-url: https://api.github.com
+    webhook-secret: ${GITHUB_WEBHOOK_SECRET:your-webhook-secret}
+
+# Encryption key for storing GitHub access tokens
+encryption:
+  secret-key: ${ENCRYPTION_SECRET_KEY:default-dev-encryption-key-32b!}
+
+# Application settings
+app:
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}

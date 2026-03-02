@@ -1,0 +1,5 @@
+/.idea/
+/.kiro/
+/.vscode/
+**/node_modules/
+**/target/

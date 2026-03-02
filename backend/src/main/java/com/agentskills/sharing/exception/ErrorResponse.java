@@ -1,0 +1,19 @@
+package com.agentskills.sharing.exception;
+
+public record ErrorResponse(ErrorDetail error) {
+
+    public record ErrorDetail(
+            String code,
+            String message,
+            Object details
+    ) {
+    }
+
+    public static ErrorResponse of(String code, String message) {
+        return new ErrorResponse(new ErrorDetail(code, message, null));
+    }
+
+    public static ErrorResponse of(String code, String message, Object details) {
+        return new ErrorResponse(new ErrorDetail(code, message, details));
+    }
+}
