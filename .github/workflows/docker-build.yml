@@ -58,7 +58,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Lowercase image name
-        run: echo "FRONTEND_IMAGE=$(echo '${{ env.REGISTRY }}/${{ github.repository }}' | tr '[:upper:]' '[:lower:]')/frontend" >> $GITHUB_ENV
+        run: echo "FRONTEND_IMAGE=$(echo '${{ env.REGISTRY }}/${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/skillhub/frontend" >> $GITHUB_ENV
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
