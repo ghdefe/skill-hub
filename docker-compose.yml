@@ -7,6 +7,9 @@ services:
       POSTGRES_DB: skills_sharing
       POSTGRES_USER: ${DATABASE_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+    restart: unless-stopped
+    ports:
+      - "42150:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -22,13 +25,16 @@ services:
       GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
       ENCRYPTION_SECRET_KEY: ${ENCRYPTION_SECRET_KEY}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:42151}
+    restart: unless-stopped
     ports:
-      - "42151:8080"
+      - "42151:18123"
     depends_on:
       - postgres
 
   frontend:
     image: ghcr.io/ghdefe/skillhub/frontend:latest
+    restart: unless-stopped
     ports:
       - "42152:8080"
     depends_on:

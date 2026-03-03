@@ -76,3 +76,4 @@ encryption:
 # Application settings
 app:
   frontend-url: ${FRONTEND_URL:http://localhost:5173}
+  backend-url: ${BACKEND_URL:http://localhost:18123}

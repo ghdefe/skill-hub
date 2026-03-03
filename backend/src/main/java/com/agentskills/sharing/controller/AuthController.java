@@ -4,6 +4,7 @@ import com.agentskills.sharing.dto.AuthUserResponse;
 import com.agentskills.sharing.entity.User;
 import com.agentskills.sharing.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,6 +33,9 @@ import java.util.NoSuchElementException;
 public class AuthController {
 
     private final UserRepository userRepository;
+    
+    @Value("${app.backend-url:http://localhost:18123}")
+    private String backendUrl;
 
     /**
      * Initiates GitHub OAuth login by redirecting to Spring Security's OAuth2 authorization endpoint.
@@ -40,7 +44,7 @@ public class AuthController {
     public void githubLogin(HttpServletResponse response) throws IOException {
         // Must use absolute URL so the browser hits the backend directly,
         // not the frontend dev server.
-        response.sendRedirect("http://localhost:18123/oauth2/authorization/github");
+        response.sendRedirect(backendUrl + "/oauth2/authorization/github");
     }
 
     /**
