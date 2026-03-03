@@ -23,6 +23,7 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jjwt.version>0.12.6</jjwt.version>
         <jqwik.version>1.9.1</jqwik.version>
+        <docker.image.prefix>skillhub</docker.image.prefix>
     </properties>
 
     <dependencies>
@@ -154,7 +155,7 @@
                         <image>eclipse-temurin:17-jre</image>
                     </from>
                     <to>
-                        <image>${docker.image.prefix:skillhub}/backend</image>
+                        <image>${docker.image.prefix}/backend</image>
                         <tags>
                             <tag>${project.version}</tag>
                             <tag>latest</tag>
