@@ -52,6 +52,7 @@ spring:
             client-id: ${GITHUB_CLIENT_ID:}
             client-secret: ${GITHUB_CLIENT_SECRET:}
             scope: read:user,repo
+            redirect-uri: ${BACKEND_URL:http://localhost:18123}/login/oauth2/code/github
         provider:
           github:
             authorization-uri: https://github.com/login/oauth/authorize
