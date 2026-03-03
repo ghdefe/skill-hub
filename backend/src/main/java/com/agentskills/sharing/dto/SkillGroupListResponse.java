@@ -13,16 +13,32 @@ public record SkillGroupListResponse(
         String description,
         String author,
         int downloadCount,
+        int skillCount,
+        int starCount,
+        int forkCount,
+        String repoUrl,
         LocalDateTime createdAt
 ) {
 
-    public static SkillGroupListResponse from(SkillGroup group) {
+    public static SkillGroupListResponse from(SkillGroup group, int skillCount) {
+        int starCount = 0;
+        int forkCount = 0;
+        String repoUrl = null;
+        if (group.getRepository() != null) {
+            starCount = group.getRepository().getStarCount();
+            forkCount = group.getRepository().getForkCount();
+            repoUrl = group.getRepository().getUrl();
+        }
         return new SkillGroupListResponse(
                 group.getId(),
                 group.getName(),
                 group.getDescription(),
                 group.getUser() != null ? group.getUser().getUsername() : null,
                 group.getDownloadCount(),
+                skillCount,
+                starCount,
+                forkCount,
+                repoUrl,
                 group.getCreatedAt()
         );
     }

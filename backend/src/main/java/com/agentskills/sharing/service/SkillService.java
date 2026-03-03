@@ -87,7 +87,11 @@ public class SkillService {
      */
     public List<SkillGroupListResponse> listSkillGroups() {
         return skillGroupRepository.findAll().stream()
-                .map(SkillGroupListResponse::from)
+                .map(group -> {
+                    int skillCount = skillRepository.findBySkillGroupIdAndStatus(
+                            group.getId(), SkillStatus.ACTIVE).size();
+                    return SkillGroupListResponse.from(group, skillCount);
+                })
                 .toList();
     }
 
@@ -128,7 +132,8 @@ public class SkillService {
     }
 
     /**
-     * Record a copy event for a SkillGroup (increment download count by 1).
+     * Record a copy event for a SkillGroup (increment download count for the group
+     * and each active skill within it).
      *
      * @param id the SkillGroup ID
      * @throws NoSuchElementException if the SkillGroup does not exist
@@ -139,6 +144,14 @@ public class SkillService {
                 .orElseThrow(() -> new NoSuchElementException("SkillGroup 不存在: " + id));
         group.setDownloadCount(group.getDownloadCount() + 1);
         skillGroupRepository.save(group);
+
+        // Also increment each active skill's download count
+        List<Skill> activeSkills = skillRepository.findBySkillGroupIdAndStatus(
+                id, SkillStatus.ACTIVE);
+        for (Skill skill : activeSkills) {
+            skill.setDownloadCount(skill.getDownloadCount() + 1);
+        }
+        skillRepository.saveAll(activeSkills);
     }
 
     /**

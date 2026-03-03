@@ -64,14 +64,18 @@ async function importRepo() {
 
   importing.value = true
   try {
-    await http.post('/repositories', { url, scanPath: scanPath.value.trim() || 'skills' })
+    await http.post('/repositories', { url, scanPath: scanPath.value.trim() || 'skills' }, { timeout: 120000 })
     successMessage.value = '仓库导入成功！'
     repoUrl.value = ''
     await fetchRepositories()
   } catch (err: unknown) {
-    const axiosErr = err as { response?: { data?: { error?: { message?: string } } } }
-    errorMessage.value =
-      axiosErr.response?.data?.error?.message || '导入失败，请稍后重试'
+    const axiosErr = err as { response?: { data?: { error?: { message?: string } } }, code?: string }
+    if (axiosErr.code === 'ECONNABORTED') {
+      errorMessage.value = '导入超时，仓库可能包含较多 Skills，请稍后在列表中查看或重试'
+    } else {
+      errorMessage.value =
+        axiosErr.response?.data?.error?.message || '导入失败，请稍后重试'
+    }
   } finally {
     importing.value = false
   }
@@ -107,7 +111,7 @@ async function syncRepo(id: string) {
   syncErrorId.value = null
   syncingIds.value.add(id)
   try {
-    const { data } = await http.post<RepositoryItem>(`/repositories/${id}/sync`)
+    const { data } = await http.post<RepositoryItem>(`/repositories/${id}/sync`, null, { timeout: 120000 })
     const idx = repositories.value.findIndex(r => r.id === id)
     if (idx !== -1) {
       repositories.value[idx] = data
@@ -157,6 +161,7 @@ onMounted(fetchRepositories)
             {{ importing ? '正在导入...' : '导入仓库' }}
           </button>
         </div>
+        <div v-if="importing" class="text-xs text-gray-400">正在扫描仓库中的 Skills，可能需要一些时间，请耐心等待...</div>
         <div class="flex items-center gap-2">
           <label class="text-xs text-gray-500 shrink-0">扫描目录:</label>
           <input
@@ -268,7 +273,8 @@ onMounted(fetchRepositories)
                 </svg>
                 {{ syncingIds.has(repo.id) ? '同步中...' : '同步' }}
               </button>
-              <span v-if="syncSuccessId === repo.id" class="text-xs text-green-600">✓ 已同步</span>
+              <span v-if="syncingIds.has(repo.id)" class="text-xs text-gray-400">扫描中，请稍候</span>
+              <span v-else-if="syncSuccessId === repo.id" class="text-xs text-green-600">✓ 已同步</span>
               <span v-if="syncErrorId === repo.id" class="text-xs text-red-600">同步失败</span>
             </div>
 

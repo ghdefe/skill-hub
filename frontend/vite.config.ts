@@ -14,6 +14,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:18123',
         changeOrigin: true,
+        timeout: 120000,
       },
       '/oauth2': {
         target: 'http://localhost:18123',

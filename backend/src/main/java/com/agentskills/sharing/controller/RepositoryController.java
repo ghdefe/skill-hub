@@ -64,10 +64,12 @@ public class RepositoryController {
             @Valid @RequestBody ImportRepositoryRequest request,
             Authentication authentication) {
 
+        log.info("开始执行导入仓库: {}", request.url());
         String userId = (String) authentication.getPrincipal();
         Repository repo = repositoryScannerService.importRepository(
                 request.url(), userId, request.effectiveScanPath());
 
+        log.info("完成导入仓库: {}", request.url());
         RepositoryResponse response = buildResponse(repo);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

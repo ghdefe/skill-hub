@@ -161,7 +161,7 @@ public class RepositoryScannerService {
 
         // Check if current directory contains SKILL.md
         boolean hasSkillMd = contents.stream()
-                .anyMatch(item -> "file".equals(item.type()) && "SKILL.md".equals(item.name()));
+                .anyMatch(item -> "file".equals(item.type()) && "SKILL.md".equalsIgnoreCase(item.name()));
 
         if (hasSkillMd) {
             result.add(path);
