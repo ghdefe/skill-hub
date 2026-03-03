@@ -131,7 +131,7 @@ public class RepositoryScannerService {
                     SkillGroup newGroup = new SkillGroup();
                     newGroup.setRepository(savedRepo);
                     newGroup.setUser(user);
-                    newGroup.setName(repo);
+                    newGroup.setName(owner + "/" + repo);
                     return newGroup;
                 });
         skillGroup = skillGroupRepository.save(skillGroup);

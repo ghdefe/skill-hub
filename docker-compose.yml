@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: skills_sharing
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    image: skillhub/backend:latest
+    ports:
+      - "18123:18123"
+    environment:
+      DATABASE_URL: jdbc:postgresql://postgres:5432/skills_sharing
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: postgres
+      GITHUB_CLIENT_ID: ${GITHUB_CLIENT_ID}
+      GITHUB_CLIENT_SECRET: ${GITHUB_CLIENT_SECRET}
+      JWT_SECRET: ${JWT_SECRET}
+      GITHUB_WEBHOOK_SECRET: ${GITHUB_WEBHOOK_SECRET}
+      ENCRYPTION_SECRET_KEY: ${ENCRYPTION_SECRET_KEY}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+    depends_on:
+      - postgres
+
+  frontend:
+    image: skillhub/frontend:latest
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

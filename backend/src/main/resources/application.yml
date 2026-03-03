@@ -49,8 +49,8 @@ spring:
       client:
         registration:
           github:
-            client-id: ${GITHUB_CLIENT_ID:REMOVED}
-            client-secret: ${GITHUB_CLIENT_SECRET:REMOVED}
+            client-id: ${GITHUB_CLIENT_ID:}
+            client-secret: ${GITHUB_CLIENT_SECRET:}
             scope: read:user,repo
         provider:
           github:
@@ -60,18 +60,18 @@ spring:
 
 # JWT Configuration
 jwt:
-  secret: ${JWT_SECRET:default-dev-secret-key-change-in-production-must-be-at-least-256-bits}
+  secret: ${JWT_SECRET:}
   expiration-days: 7
 
 # GitHub API
 github:
   api:
     base-url: https://api.github.com
-    webhook-secret: ${GITHUB_WEBHOOK_SECRET:your-webhook-secret}
+    webhook-secret: ${GITHUB_WEBHOOK_SECRET:}
 
 # Encryption key for storing GitHub access tokens
 encryption:
-  secret-key: ${ENCRYPTION_SECRET_KEY:default-dev-encryption-key-32b!}
+  secret-key: ${ENCRYPTION_SECRET_KEY:}
 
 # Application settings
 app:
