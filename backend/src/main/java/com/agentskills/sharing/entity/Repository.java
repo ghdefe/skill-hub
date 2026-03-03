@@ -58,6 +58,9 @@ public class Repository {
     @Column(name = "scan_path", nullable = false)
     private String scanPath = "skills";
 
+    @Column(name = "scan_branch")
+    private String scanBranch;
+
     @Column(name = "last_synced_at")
     private LocalDateTime lastSyncedAt;
 

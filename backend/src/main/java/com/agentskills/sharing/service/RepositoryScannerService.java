@@ -60,13 +60,14 @@ public class RepositoryScannerService {
      * Import a GitHub repository: validate URL, recursively scan the scan path
      * for directories containing SKILL.md, and create associated entities.
      *
-     * @param repoUrl  the GitHub repository URL
-     * @param userId   the authenticated user's ID
-     * @param scanPath the directory path to scan (e.g. "skills")
+     * @param repoUrl    the GitHub repository URL
+     * @param userId     the authenticated user's ID
+     * @param scanPath   the directory path to scan (e.g. "skills")
+     * @param scanBranch optional branch to scan (null = use repo default branch)
      * @return the created or updated Repository entity
      */
     @Transactional
-    public Repository importRepository(String repoUrl, String userId, String scanPath) {
+    public Repository importRepository(String repoUrl, String userId, String scanPath, String scanBranch) {
         // 1. Validate URL format and extract owner/repo
         Matcher matcher = GITHUB_URL_PATTERN.matcher(repoUrl.trim());
         if (!matcher.matches()) {
@@ -100,6 +101,9 @@ public class RepositoryScannerService {
                     return newRepo;
                 });
         repoEntity.setScanPath(scanPath);
+        if (scanBranch != null) {
+            repoEntity.setScanBranch(scanBranch);
+        }
 
         // 5. Get repo info (star/fork counts, default branch) and update
         String defaultBranch = "main";
@@ -112,6 +116,10 @@ public class RepositoryScannerService {
             }
         } catch (Exception e) {
             log.warn("Failed to fetch repo info for {}/{}: {}", owner, repo, e.getMessage());
+        }
+        // Use scanBranch if specified, otherwise use repo's default branch
+        if (scanBranch != null) {
+            defaultBranch = scanBranch;
         }
         repoEntity.setDefaultBranch(defaultBranch);
         repoEntity.setLastSyncedAt(LocalDateTime.now());

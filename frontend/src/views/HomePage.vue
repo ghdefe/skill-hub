@@ -68,9 +68,11 @@ const allTags = ref<TagItem[]>([])
 // SkillGroups state
 const skillGroups = ref<SkillGroupItem[]>([])
 const groupsLoading = ref(false)
+const groupSearchQuery = ref('')
 
 // Debounce timer
 let debounceTimer: ReturnType<typeof setTimeout> | null = null
+let groupDebounceTimer: ReturnType<typeof setTimeout> | null = null
 
 // Sort options
 const sortOptions = [
@@ -125,7 +127,9 @@ async function fetchSkills() {
 async function fetchSkillGroups() {
   groupsLoading.value = true
   try {
-    const { data } = await http.get<SkillGroupItem[]>('/skill-groups')
+    const params: Record<string, string> = {}
+    if (groupSearchQuery.value.trim()) params.q = groupSearchQuery.value.trim()
+    const { data } = await http.get<SkillGroupItem[]>('/skill-groups', { params })
     skillGroups.value = data
   } catch {
     skillGroups.value = []
@@ -146,9 +150,16 @@ async function fetchTags() {
 function switchView(mode: ViewMode) {
   if (viewMode.value === mode) return
   viewMode.value = mode
-  if (mode === 'groups' && skillGroups.value.length === 0) {
+  if (mode === 'groups') {
     fetchSkillGroups()
   }
+}
+
+function onGroupSearchInput() {
+  if (groupDebounceTimer) clearTimeout(groupDebounceTimer)
+  groupDebounceTimer = setTimeout(() => {
+    fetchSkillGroups()
+  }, 500)
 }
 
 function onSearchInput() {
@@ -352,6 +363,17 @@ onMounted(() => {
 
     <!-- ==================== Skill Groups View ==================== -->
     <template v-if="viewMode === 'groups'">
+      <!-- Search Bar -->
+      <div class="mb-6">
+        <input
+          v-model="groupSearchQuery"
+          type="text"
+          placeholder="搜索 Skill Groups..."
+          class="w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+          @input="onGroupSearchInput"
+        />
+      </div>
+
       <!-- Loading -->
       <div v-if="groupsLoading" class="py-16 text-center text-gray-500">
         <svg class="animate-spin h-8 w-8 mx-auto mb-3 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">

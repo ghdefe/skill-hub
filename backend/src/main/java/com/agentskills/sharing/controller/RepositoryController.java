@@ -67,7 +67,7 @@ public class RepositoryController {
         log.info("开始执行导入仓库: {}", request.url());
         String userId = (String) authentication.getPrincipal();
         Repository repo = repositoryScannerService.importRepository(
-                request.url(), userId, request.effectiveScanPath());
+                request.url(), userId, request.effectiveScanPath(), request.effectiveScanBranch());
 
         log.info("完成导入仓库: {}", request.url());
         RepositoryResponse response = buildResponse(repo);
@@ -127,9 +127,9 @@ public class RepositoryController {
             throw new SecurityException("无权操作此仓库");
         }
 
-        // Re-scan using stored scanPath
+        // Re-scan using stored scanPath and scanBranch
         Repository updatedRepo = repositoryScannerService.importRepository(
-                repo.getUrl(), userId, repo.getScanPath());
+                repo.getUrl(), userId, repo.getScanPath(), repo.getScanBranch());
 
         // Update Star/Fork counts from GitHub API
         try {

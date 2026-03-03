@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -36,11 +37,12 @@ public class SkillGroupController {
     private final SkillService skillService;
 
     /**
-     * List all skill groups with basic info.
+     * List all skill groups with basic info. Supports optional name search.
      */
     @GetMapping
-    public ResponseEntity<List<SkillGroupListResponse>> listSkillGroups() {
-        List<SkillGroupListResponse> response = skillService.listSkillGroups();
+    public ResponseEntity<List<SkillGroupListResponse>> listSkillGroups(
+            @RequestParam(required = false) String q) {
+        List<SkillGroupListResponse> response = skillService.listSkillGroups(q);
         return ResponseEntity.ok(response);
     }
 

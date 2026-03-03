@@ -17,6 +17,7 @@ public record RepositoryResponse(
         int starCount,
         int forkCount,
         String scanPath,
+        String scanBranch,
         LocalDateTime lastSyncedAt,
         LocalDateTime createdAt,
         SkillGroupSummary skillGroup
@@ -42,6 +43,7 @@ public record RepositoryResponse(
                 repo.getStarCount(),
                 repo.getForkCount(),
                 repo.getScanPath(),
+                repo.getScanBranch(),
                 repo.getLastSyncedAt(),
                 repo.getCreatedAt(),
                 groupSummary

@@ -11,12 +11,21 @@ public record ImportRepositoryRequest(
         @Pattern(regexp = "^https://github\\.com/[^/]+/[^/]+.*$", message = "仓库 URL 格式无效")
         String url,
 
-        String scanPath
+        String scanPath,
+
+        String scanBranch
 ) {
     /**
      * Return the scan path, defaulting to "skills" if not provided.
      */
     public String effectiveScanPath() {
         return (scanPath != null && !scanPath.isBlank()) ? scanPath.trim() : "skills";
+    }
+
+    /**
+     * Return the scan branch, or null to use the repo's default branch.
+     */
+    public String effectiveScanBranch() {
+        return (scanBranch != null && !scanBranch.isBlank()) ? scanBranch.trim() : null;
     }
 }

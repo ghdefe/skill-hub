@@ -85,8 +85,11 @@ public class SkillService {
     /**
      * List all skill groups.
      */
-    public List<SkillGroupListResponse> listSkillGroups() {
-        return skillGroupRepository.findAll().stream()
+    public List<SkillGroupListResponse> listSkillGroups(String query) {
+        List<SkillGroup> groups = (query != null && !query.isBlank())
+                ? skillGroupRepository.findByNameContainingIgnoreCase(query.trim())
+                : skillGroupRepository.findAll();
+        return groups.stream()
                 .map(group -> {
                     int skillCount = skillRepository.findBySkillGroupIdAndStatus(
                             group.getId(), SkillStatus.ACTIVE).size();

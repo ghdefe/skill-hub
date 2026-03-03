@@ -16,6 +16,7 @@ interface RepositoryItem {
   starCount: number
   forkCount: number
   scanPath: string
+  scanBranch: string | null
   lastSyncedAt: string | null
   createdAt: string
   skillGroup: SkillGroupSummary | null
@@ -23,6 +24,8 @@ interface RepositoryItem {
 
 const repoUrl = ref('')
 const scanPath = ref('skills')
+const scanBranch = ref('')
+const showAdvanced = ref(false)
 const importing = ref(false)
 const successMessage = ref('')
 const errorMessage = ref('')
@@ -64,7 +67,11 @@ async function importRepo() {
 
   importing.value = true
   try {
-    await http.post('/repositories', { url, scanPath: scanPath.value.trim() || 'skills' }, { timeout: 120000 })
+    await http.post('/repositories', {
+      url,
+      scanPath: scanPath.value.trim() || 'skills',
+      scanBranch: scanBranch.value.trim() || null,
+    }, { timeout: 120000 })
     successMessage.value = '仓库导入成功！'
     repoUrl.value = ''
     await fetchRepositories()
@@ -162,16 +169,49 @@ onMounted(fetchRepositories)
           </button>
         </div>
         <div v-if="importing" class="text-xs text-gray-400">正在扫描仓库中的 Skills，可能需要一些时间，请耐心等待...</div>
-        <div class="flex items-center gap-2">
-          <label class="text-xs text-gray-500 shrink-0">扫描目录:</label>
-          <input
-            v-model="scanPath"
-            type="text"
-            placeholder="skills"
-            class="w-48 border border-gray-300 rounded-md px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-            :disabled="importing"
-          />
-          <span class="text-xs text-gray-400">递归扫描包含 SKILL.md 的目录</span>
+
+        <!-- Advanced Settings Toggle -->
+        <button
+          type="button"
+          class="flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+          @click="showAdvanced = !showAdvanced"
+        >
+          <svg
+            class="w-3.5 h-3.5 transition-transform"
+            :class="{ 'rotate-90': showAdvanced }"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+          </svg>
+          高级设置
+        </button>
+
+        <!-- Advanced Settings Panel -->
+        <div v-if="showAdvanced" class="space-y-2 pl-4 border-l-2 border-gray-200">
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-500 shrink-0 w-20">扫描目录:</label>
+            <input
+              v-model="scanPath"
+              type="text"
+              placeholder="skills"
+              class="w-48 border border-gray-300 rounded-md px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+              :disabled="importing"
+            />
+            <span class="text-xs text-gray-400">递归扫描包含 SKILL.md 的目录</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <label class="text-xs text-gray-500 shrink-0 w-20">扫描分支:</label>
+            <input
+              v-model="scanBranch"
+              type="text"
+              placeholder="默认使用仓库主分支"
+              class="w-48 border border-gray-300 rounded-md px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+              :disabled="importing"
+            />
+            <span class="text-xs text-gray-400">留空则使用仓库默认分支</span>
+          </div>
         </div>
       </form>
 
@@ -247,6 +287,9 @@ onMounted(fetchRepositories)
               </span>
               <span v-if="repo.scanPath && repo.scanPath !== 'skills'">
                 扫描目录: {{ repo.scanPath }}
+              </span>
+              <span v-if="repo.scanBranch">
+                扫描分支: {{ repo.scanBranch }}
               </span>
               <span>
                 最后同步: {{ formatTime(repo.lastSyncedAt) }}

@@ -17,4 +17,6 @@ public interface SkillGroupRepository extends JpaRepository<SkillGroup, String> 
     boolean existsByUserIdAndName(String userId, String name);
 
     Optional<SkillGroup> findByUserIdAndName(String userId, String name);
+
+    List<SkillGroup> findByNameContainingIgnoreCase(String name);
 }
