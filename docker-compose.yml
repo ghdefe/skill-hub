@@ -7,15 +7,13 @@ services:
       POSTGRES_DB: skills_sharing
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-    ports:
-      - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    # 不暴露到宿主机，仅内部网络访问
 
   backend:
     image: skillhub/backend:latest
-    ports:
-      - "18123:18123"
+    # 不暴露到宿主机，由前端 nginx 代理访问
     environment:
       DATABASE_URL: jdbc:postgresql://postgres:5432/skills_sharing
       DATABASE_USERNAME: postgres
@@ -32,7 +30,7 @@ services:
   frontend:
     image: skillhub/frontend:latest
     ports:
-      - "80:80"
+      - "40080:8080"
     depends_on:
       - backend
 

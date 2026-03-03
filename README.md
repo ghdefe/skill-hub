@@ -124,6 +124,71 @@ git clone --filter=blob:none --no-checkout --depth=1 https://github.com/user/rep
 | **Repository** | 用户导入的 GitHub 仓库，跟踪 Star/Fork/同步状态 |
 | **Tag** | 技能标签，用于分类和筛选 |
 
+## 🐳 Docker 部署
+
+### 构建镜像
+
+```bash
+# 后端（Jib，无需 Docker daemon）
+cd backend
+./mvnw compile jib:dockerBuild -Ddocker.image.prefix=skillhub
+
+# 前端
+cd frontend
+docker build -t skillhub/frontend:latest .
+```
+
+### 启动服务
+
+```bash
+# 复制环境变量模板并填写
+cp .env.example .env
+# 编辑 .env 填入 GitHub OAuth、JWT 等配置
+
+# 启动
+docker compose up -d
+```
+
+前端容器对外暴露 `40080` 端口，后端和数据库仅在 Docker 内部网络通信，不暴露到宿主机。
+
+### 外部 Nginx 反向代理配置
+
+在宿主机的 Nginx 中配置反向代理，将域名流量转发到前端容器：
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name your-domain.com;
+
+    ssl_certificate     /etc/nginx/ssl/your-domain.com.pem;
+    ssl_certificate_key /etc/nginx/ssl/your-domain.com.key;
+
+    # 安全头
+    add_header X-Frame-Options DENY;
+    add_header X-Content-Type-Options nosniff;
+    add_header X-XSS-Protection "1; mode=block";
+
+    location / {
+        proxy_pass http://127.0.0.1:40080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 120s;
+    }
+}
+```
+
+部署时需要配置：
+- GitHub OAuth App 的 callback URL 设为 `https://your-domain.com/login/oauth2/code/github`
+- `.env` 中 `FRONTEND_URL=https://your-domain.com`
+
 ## 📄 License
 
 MIT

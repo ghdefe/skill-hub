@@ -161,6 +161,7 @@
                         </tags>
                     </to>
                     <container>
+                        <user>1000:1000</user>
                         <jvmFlags>
                             <jvmFlag>-Xms256m</jvmFlag>
                             <jvmFlag>-Xmx512m</jvmFlag>
