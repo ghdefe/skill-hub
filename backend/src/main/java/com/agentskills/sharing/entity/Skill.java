@@ -25,7 +25,7 @@ import java.util.Set;
 
 @Entity
 @Table(name = "skills", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"user_id", "name"})
+        @UniqueConstraint(columnNames = {"skill_group_id", "folder_path"})
 })
 @Data
 @EqualsAndHashCode(exclude = "tags")
@@ -43,15 +43,16 @@ public class Skill {
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 512)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "readme_content", columnDefinition = "TEXT")
     private String readmeContent;
 
-    @Column(name = "folder_path", nullable = false)
+    @Column(name = "folder_path", nullable = false, length = 1024)
     private String folderPath;
 
     @Column(name = "download_count", nullable = false)

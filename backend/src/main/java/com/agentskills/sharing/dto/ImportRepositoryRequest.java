@@ -9,6 +9,14 @@ import jakarta.validation.constraints.Pattern;
 public record ImportRepositoryRequest(
         @NotBlank(message = "仓库 URL 不能为空")
         @Pattern(regexp = "^https://github\\.com/[^/]+/[^/]+.*$", message = "仓库 URL 格式无效")
-        String url
+        String url,
+
+        String scanPath
 ) {
+    /**
+     * Return the scan path, defaulting to "skills" if not provided.
+     */
+    public String effectiveScanPath() {
+        return (scanPath != null && !scanPath.isBlank()) ? scanPath.trim() : "skills";
+    }
 }

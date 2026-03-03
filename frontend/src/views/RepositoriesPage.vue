@@ -15,12 +15,14 @@ interface RepositoryItem {
   url: string
   starCount: number
   forkCount: number
+  scanPath: string
   lastSyncedAt: string | null
   createdAt: string
   skillGroup: SkillGroupSummary | null
 }
 
 const repoUrl = ref('')
+const scanPath = ref('skills')
 const importing = ref(false)
 const successMessage = ref('')
 const errorMessage = ref('')
@@ -62,7 +64,7 @@ async function importRepo() {
 
   importing.value = true
   try {
-    await http.post('/repositories', { url })
+    await http.post('/repositories', { url, scanPath: scanPath.value.trim() || 'skills' })
     successMessage.value = '仓库导入成功！'
     repoUrl.value = ''
     await fetchRepositories()
@@ -128,31 +130,44 @@ onMounted(fetchRepositories)
     <!-- Import Form -->
     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
       <h2 class="text-lg font-semibold text-gray-800 mb-4">导入 GitHub 仓库</h2>
-      <form class="flex gap-3" @submit.prevent="importRepo">
-        <input
-          v-model="repoUrl"
-          type="text"
-          placeholder="https://github.com/owner/repo"
-          class="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
-          :disabled="importing"
-        />
-        <button
-          type="submit"
-          class="bg-gray-900 text-white px-5 py-2 rounded-md text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
-          :disabled="importing"
-        >
-          <svg
-            v-if="importing"
-            class="animate-spin h-4 w-4"
-            xmlns="http://www.w3.org/2000/svg"
-            fill="none"
-            viewBox="0 0 24 24"
+      <form class="space-y-3" @submit.prevent="importRepo">
+        <div class="flex gap-3">
+          <input
+            v-model="repoUrl"
+            type="text"
+            placeholder="https://github.com/owner/repo"
+            class="flex-1 border border-gray-300 rounded-md px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+            :disabled="importing"
+          />
+          <button
+            type="submit"
+            class="bg-gray-900 text-white px-5 py-2 rounded-md text-sm hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            :disabled="importing"
           >
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-          </svg>
-          {{ importing ? '正在导入...' : '导入仓库' }}
-        </button>
+            <svg
+              v-if="importing"
+              class="animate-spin h-4 w-4"
+              xmlns="http://www.w3.org/2000/svg"
+              fill="none"
+              viewBox="0 0 24 24"
+            >
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            {{ importing ? '正在导入...' : '导入仓库' }}
+          </button>
+        </div>
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-gray-500 shrink-0">扫描目录:</label>
+          <input
+            v-model="scanPath"
+            type="text"
+            placeholder="skills"
+            class="w-48 border border-gray-300 rounded-md px-3 py-1.5 text-xs focus:outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent"
+            :disabled="importing"
+          />
+          <span class="text-xs text-gray-400">递归扫描包含 SKILL.md 的目录</span>
+        </div>
       </form>
 
       <!-- Success Message -->
@@ -224,6 +239,9 @@ onMounted(fetchRepositories)
               </span>
               <span v-if="repo.skillGroup">
                 活跃 Skills: {{ repo.skillGroup.skillCount }}
+              </span>
+              <span v-if="repo.scanPath && repo.scanPath !== 'skills'">
+                扫描目录: {{ repo.scanPath }}
               </span>
               <span>
                 最后同步: {{ formatTime(repo.lastSyncedAt) }}

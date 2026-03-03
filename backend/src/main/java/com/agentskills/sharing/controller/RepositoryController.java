@@ -65,7 +65,8 @@ public class RepositoryController {
             Authentication authentication) {
 
         String userId = (String) authentication.getPrincipal();
-        Repository repo = repositoryScannerService.importRepository(request.url(), userId);
+        Repository repo = repositoryScannerService.importRepository(
+                request.url(), userId, request.effectiveScanPath());
 
         RepositoryResponse response = buildResponse(repo);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
@@ -124,8 +125,9 @@ public class RepositoryController {
             throw new SecurityException("无权操作此仓库");
         }
 
-        // Re-scan skills/ directory
-        Repository updatedRepo = repositoryScannerService.importRepository(repo.getUrl(), userId);
+        // Re-scan using stored scanPath
+        Repository updatedRepo = repositoryScannerService.importRepository(
+                repo.getUrl(), userId, repo.getScanPath());
 
         // Update Star/Fork counts from GitHub API
         try {

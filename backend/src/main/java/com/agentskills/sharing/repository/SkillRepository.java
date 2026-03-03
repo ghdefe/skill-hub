@@ -23,6 +23,8 @@ public interface SkillRepository extends JpaRepository<Skill, String> {
 
     Optional<Skill> findByUserIdAndName(String userId, String name);
 
+    Optional<Skill> findBySkillGroupIdAndFolderPath(String skillGroupId, String folderPath);
+
     boolean existsByUserIdAndName(String userId, String name);
 
     /**

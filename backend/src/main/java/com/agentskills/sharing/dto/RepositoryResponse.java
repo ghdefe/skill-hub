@@ -16,6 +16,7 @@ public record RepositoryResponse(
         String url,
         int starCount,
         int forkCount,
+        String scanPath,
         LocalDateTime lastSyncedAt,
         LocalDateTime createdAt,
         SkillGroupSummary skillGroup
@@ -40,6 +41,7 @@ public record RepositoryResponse(
                 repo.getUrl(),
                 repo.getStarCount(),
                 repo.getForkCount(),
+                repo.getScanPath(),
                 repo.getLastSyncedAt(),
                 repo.getCreatedAt(),
                 groupSummary

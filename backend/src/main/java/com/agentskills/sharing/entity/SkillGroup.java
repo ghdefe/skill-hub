@@ -39,6 +39,7 @@ public class SkillGroup {
     @Column(nullable = false)
     private String name;
 
+    @Column(columnDefinition = "TEXT")
     private String description;
 
     @Column(name = "download_count", nullable = false)

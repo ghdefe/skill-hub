@@ -118,7 +118,7 @@ public class WebhookService {
                 try {
                     log.info("Triggering re-scan for repository {}/{} (user: {})",
                             owner, repoName, repo.getUser().getId());
-                    repositoryScannerService.importRepository(repo.getUrl(), repo.getUser().getId());
+                    repositoryScannerService.importRepository(repo.getUrl(), repo.getUser().getId(), repo.getScanPath());
                 } catch (Exception e) {
                     log.error("Failed to re-scan repository {}/{} for user {}: {}",
                             owner, repoName, repo.getUser().getId(), e.getMessage());

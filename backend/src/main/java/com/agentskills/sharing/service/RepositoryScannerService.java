@@ -57,15 +57,16 @@ public class RepositoryScannerService {
     private final EncryptionUtil encryptionUtil;
 
     /**
-     * Import a GitHub repository: validate URL, scan skills/ directory,
-     * parse each subfolder into Skill records, and create associated entities.
+     * Import a GitHub repository: validate URL, recursively scan the scan path
+     * for directories containing SKILL.md, and create associated entities.
      *
-     * @param repoUrl the GitHub repository URL
-     * @param userId  the authenticated user's ID
+     * @param repoUrl  the GitHub repository URL
+     * @param userId   the authenticated user's ID
+     * @param scanPath the directory path to scan (e.g. "skills")
      * @return the created or updated Repository entity
      */
     @Transactional
-    public Repository importRepository(String repoUrl, String userId) {
+    public Repository importRepository(String repoUrl, String userId, String scanPath) {
         // 1. Validate URL format and extract owner/repo
         Matcher matcher = GITHUB_URL_PATTERN.matcher(repoUrl.trim());
         if (!matcher.matches()) {
@@ -79,19 +80,15 @@ public class RepositoryScannerService {
                 .orElseThrow(() -> new NoSuchElementException("用户不存在"));
         String token = encryptionUtil.decrypt(user.getAccessToken());
 
-        // 3. Read skills/ directory from GitHub
-        List<GitHubContentItem> skillsDir = fetchSkillsDirectory(owner, repo, token);
+        // 3. Recursively discover skill folders (those containing SKILL.md)
+        List<String> skillFolderPaths = new java.util.ArrayList<>();
+        discoverSkillFolders(owner, repo, scanPath, token, skillFolderPaths);
 
-        // 4. Filter for directories only
-        List<GitHubContentItem> subDirs = skillsDir.stream()
-                .filter(item -> "dir".equals(item.type()))
-                .toList();
-
-        if (subDirs.isEmpty()) {
-            throw new IllegalArgumentException("skills/ 目录下未找到任何 Skill，请确认目录结构");
+        if (skillFolderPaths.isEmpty()) {
+            throw new IllegalArgumentException(scanPath + "/ 目录下未找到任何包含 SKILL.md 的 Skill，请确认目录结构");
         }
 
-        // 5. Create or find Repository entity
+        // 4. Create or find Repository entity
         Repository repoEntity = repositoryRepository
                 .findByUserIdAndGithubOwnerAndGithubRepo(userId, owner, repo)
                 .orElseGet(() -> {
@@ -102,8 +99,9 @@ public class RepositoryScannerService {
                     newRepo.setUrl(repoUrl.trim());
                     return newRepo;
                 });
+        repoEntity.setScanPath(scanPath);
 
-        // 6. Get repo info (star/fork counts, default branch) and update
+        // 5. Get repo info (star/fork counts, default branch) and update
         String defaultBranch = "main";
         try {
             GitHubRepoInfo repoInfo = gitHubApiClient.getRepoInfo(owner, repo, token);
@@ -119,7 +117,7 @@ public class RepositoryScannerService {
         repoEntity.setLastSyncedAt(LocalDateTime.now());
         Repository savedRepo = repositoryRepository.save(repoEntity);
 
-        // 7. Create or find SkillGroup
+        // 6. Create or find SkillGroup
         SkillGroup skillGroup = skillGroupRepository.findByRepositoryId(savedRepo.getId())
                 .orElseGet(() -> {
                     SkillGroup newGroup = new SkillGroup();
@@ -130,18 +128,54 @@ public class RepositoryScannerService {
                 });
         skillGroup = skillGroupRepository.save(skillGroup);
 
-        // 8. Parse each subdirectory and create Skill records, tracking scanned folder paths
-        Set<String> scannedFolderPaths = new HashSet<>();
-        for (GitHubContentItem dir : subDirs) {
-            String folderPath = "skills/" + dir.name();
-            scannedFolderPaths.add(folderPath);
-            parseAndCreateSkill(dir, owner, repo, token, skillGroup, user, defaultBranch);
+        // 7. Parse each discovered skill folder
+        Set<String> scannedFolderPaths = new HashSet<>(skillFolderPaths);
+        for (String folderPath : skillFolderPaths) {
+            parseAndCreateSkill(folderPath, owner, repo, token, skillGroup, user, defaultBranch);
         }
 
-        // 9. Diff detection: mark skills that are no longer in the scan as REMOVED
+        // 8. Diff detection: mark skills that are no longer in the scan as REMOVED
         markRemovedSkills(skillGroup, scannedFolderPaths);
 
         return savedRepo;
+    }
+
+    /**
+     * Recursively discover directories that contain a SKILL.md file.
+     * A directory is considered a skill if it directly contains SKILL.md.
+     */
+    private void discoverSkillFolders(String owner, String repo, String path,
+                                       String token, List<String> result) {
+        List<GitHubContentItem> contents;
+        try {
+            contents = gitHubApiClient.getRepoContents(owner, repo, path, token);
+        } catch (GitHubApiException e) {
+            if (e.getStatusCode() == 404) {
+                throw new IllegalArgumentException("未找到 " + path + "/ 目录，请确认仓库结构");
+            }
+            throw new IllegalArgumentException("仓库不可访问，请检查 URL 和权限");
+        } catch (Exception e) {
+            log.error("Failed to access repository {}/{}/{}: {}", owner, repo, path, e.getMessage());
+            throw new IllegalArgumentException("仓库不可访问，请检查 URL 和权限");
+        }
+
+        // Check if current directory contains SKILL.md
+        boolean hasSkillMd = contents.stream()
+                .anyMatch(item -> "file".equals(item.type()) && "SKILL.md".equals(item.name()));
+
+        if (hasSkillMd) {
+            result.add(path);
+            return; // Don't recurse deeper into a skill folder
+        }
+
+        // Recurse into subdirectories
+        List<GitHubContentItem> subDirs = contents.stream()
+                .filter(item -> "dir".equals(item.type()))
+                .toList();
+
+        for (GitHubContentItem dir : subDirs) {
+            discoverSkillFolders(owner, repo, dir.path(), token, result);
+        }
     }
 
     /**
@@ -162,38 +196,20 @@ public class RepositoryScannerService {
     }
 
     /**
-     * Fetch the skills/ directory contents from GitHub, handling errors.
+     * Parse a single skill directory: read SKILL.md, manifest and README, then create/update Skill entity.
      */
-    private List<GitHubContentItem> fetchSkillsDirectory(String owner, String repo, String token) {
-        try {
-            return gitHubApiClient.getRepoContents(owner, repo, "skills", token);
-        } catch (GitHubApiException e) {
-            if (e.getStatusCode() == 404) {
-                throw new IllegalArgumentException("未找到 skills/ 目录，请确认仓库结构");
-            }
-            throw new IllegalArgumentException("仓库不可访问，请检查 URL 和权限");
-        } catch (Exception e) {
-            log.error("Failed to access repository {}/{}: {}", owner, repo, e.getMessage());
-            throw new IllegalArgumentException("仓库不可访问，请检查 URL 和权限");
-        }
-    }
-
-    /**
-     * Parse a single skill subdirectory: read SKILL.md, manifest and README, then create/update Skill entity.
-     */
-    private void parseAndCreateSkill(GitHubContentItem dir, String owner, String repo,
+    private void parseAndCreateSkill(String folderPath, String owner, String repo,
                                      String token, SkillGroup skillGroup, User user,
                                      String defaultBranch) {
-        String folderName = dir.name();
-        String folderPath = "skills/" + folderName;
+        String folderName = folderPath.contains("/")
+                ? folderPath.substring(folderPath.lastIndexOf('/') + 1)
+                : folderPath;
 
-        // 1. Try to read and parse SKILL.md
+        // 1. Try to read and parse SKILL.md (we know it exists since discovery found it)
         SkillMdMetadata skillMd = readSkillMd(owner, repo, folderPath, token);
 
-        // 2. Generate Raw File URL only when SKILL.md exists (metadata is not EMPTY)
-        String skillMdUrl = (skillMd != SkillMdMetadata.EMPTY)
-                ? buildSkillMdUrl(owner, repo, defaultBranch, folderPath)
-                : null;
+        // 2. Generate Raw File URL (SKILL.md always exists for discovered folders)
+        String skillMdUrl = buildSkillMdUrl(owner, repo, defaultBranch, folderPath);
 
         // 3. If SKILL.md doesn't provide complete metadata, fall back to manifest
         ManifestData manifest = null;
@@ -208,22 +224,17 @@ public class RepositoryScannerService {
         String skillName = resolveSkillName(skillMd, manifest, folderName);
         String description = resolveDescription(skillMd, manifest, readmeContent);
 
-        // Create or update Skill
-        Skill skill = skillRepository.findByUserIdAndName(user.getId(), skillName)
+        // Create or update Skill (lookup by skillGroup + folderPath for idempotent re-imports)
+        Skill skill = skillRepository.findBySkillGroupIdAndFolderPath(skillGroup.getId(), folderPath)
                 .orElseGet(() -> {
                     Skill newSkill = new Skill();
                     newSkill.setUser(user);
-                    newSkill.setName(skillName);
+                    newSkill.setSkillGroup(skillGroup);
+                    newSkill.setFolderPath(folderPath);
                     return newSkill;
                 });
 
-        // Skill name uniqueness validation: reject if same name exists in a different SkillGroup
-        if (skill.getId() != null && skill.getSkillGroup() != null
-                && !skill.getSkillGroup().getId().equals(skillGroup.getId())) {
-            throw new IllegalArgumentException(
-                    "Skill 名称 '" + skillName + "' 已被同一发布者的其他 Skill 组使用");
-        }
-
+        skill.setName(skillName);
         skill.setSkillGroup(skillGroup);
         skill.setDescription(description);
         skill.setReadmeContent(readmeContent);
