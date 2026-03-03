@@ -36,7 +36,7 @@ jobs:
 
       - name: Build and push backend image with Jib
         run: |
-          ./mvnw -B compile jib:build \
+          mvn -B compile jib:build \
             -Ddocker.image.prefix=${{ env.REGISTRY }}/${{ github.repository_owner }}/skillhub \
             -Djib.to.tags=latest,${{ github.sha }}
         working-directory: backend

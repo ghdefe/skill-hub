@@ -1,0 +1,1 @@
+{"root":["./src/main.ts","./src/api/http.ts","./src/composables/useauth.ts","./src/router/index.ts","./src/utils/downloadcommand.ts","./src/app.vue","./src/views/aboutpage.vue","./src/views/authcallbackpage.vue","./src/views/homepage.vue","./src/views/repositoriespage.vue","./src/views/skilldetailpage.vue","./src/views/skillgroupdetailpage.vue","./env.d.ts"],"version":"5.7.3"}

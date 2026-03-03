@@ -74,7 +74,7 @@ export GITHUB_CLIENT_SECRET=your_client_secret
 export JWT_SECRET=your-jwt-secret-at-least-256-bits
 
 # 启动
-./mvnw spring-boot:run
+mvn spring-boot:run
 ```
 
 后端默认运行在 `http://localhost:18123`。
@@ -93,7 +93,7 @@ npm run dev
 
 ```bash
 # 后端测试
-cd backend && ./mvnw test
+cd backend && mvn test
 
 # 前端测试
 cd frontend && npm run test
@@ -131,7 +131,7 @@ git clone --filter=blob:none --no-checkout --depth=1 https://github.com/user/rep
 ```bash
 # 后端（Jib，无需 Docker daemon）
 cd backend
-./mvnw compile jib:dockerBuild -Ddocker.image.prefix=skillhub
+mvn compile jib:dockerBuild -Ddocker.image.prefix=skillhub
 
 # 前端
 cd frontend
