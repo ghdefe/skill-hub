@@ -31,18 +31,6 @@
 - **零依赖** — 下载命令只需要 git，跨平台通用
 - **自动同步** — GitHub Webhook + 定时任务，仓库更新自动同步
 
-## 🛠️ 技术栈
-
-| 层级 | 技术 |
-|------|------|
-| 后端 | Java 17 · Spring Boot 3.5 · Spring Security · Spring Data JPA |
-| 数据库 | PostgreSQL（测试使用 H2） |
-| 认证 | GitHub OAuth2 + JWT |
-| 缓存 | Caffeine |
-| 前端 | Vue 3.5 · TypeScript · Vite 6 · Tailwind CSS |
-| 测试 | JUnit 5 · jqwik · Vitest · @vue/test-utils |
-| 部署 | Docker Compose · Nginx 反向代理 |
-
 ## 🚀 使用场景
 
 1. 你开发了一个好用的 Agent Skill，想分享给社区 → 导入仓库，自动发布
