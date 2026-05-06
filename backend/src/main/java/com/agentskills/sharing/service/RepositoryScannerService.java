@@ -86,7 +86,8 @@ public class RepositoryScannerService {
         discoverSkillFolders(owner, repo, scanPath, token, skillFolderPaths);
 
         if (skillFolderPaths.isEmpty()) {
-            throw new IllegalArgumentException(scanPath + "/ 目录下未找到任何包含 SKILL.md 的 Skill，请确认目录结构");
+            String pathDisplay = scanPath.isEmpty() ? "根目录" : scanPath + "/";
+            throw new IllegalArgumentException(pathDisplay + " 下未找到任何包含 SKILL.md 的 Skill，请确认目录结构");
         }
 
         // 4. Create or find Repository entity
@@ -159,7 +160,8 @@ public class RepositoryScannerService {
             contents = gitHubApiClient.getRepoContents(owner, repo, path, token);
         } catch (GitHubApiException e) {
             if (e.getStatusCode() == 404) {
-                throw new IllegalArgumentException("未找到 " + path + "/ 目录，请确认仓库结构");
+                String pathDisplay = path.isEmpty() ? "根目录" : path + "/ 目录";
+                throw new IllegalArgumentException("未找到 " + pathDisplay + "，请确认仓库结构");
             }
             throw new IllegalArgumentException("仓库不可访问，请检查 URL 和权限");
         } catch (Exception e) {

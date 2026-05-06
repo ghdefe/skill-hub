@@ -17,9 +17,15 @@ public record ImportRepositoryRequest(
 ) {
     /**
      * Return the scan path, defaulting to "skills" if not provided.
+     * Converts "." to empty string for GitHub API root directory access.
      */
     public String effectiveScanPath() {
-        return (scanPath != null && !scanPath.isBlank()) ? scanPath.trim() : "skills";
+        if (scanPath == null || scanPath.isBlank()) {
+            return "skills";
+        }
+        String trimmed = scanPath.trim();
+        // GitHub API uses empty string for root directory, not "."
+        return ".".equals(trimmed) ? "" : trimmed;
     }
 
     /**

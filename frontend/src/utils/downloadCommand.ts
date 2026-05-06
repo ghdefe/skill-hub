@@ -32,8 +32,24 @@ export function generateSkillCommand(
   shell: ShellType = 'bash',
 ): string {
   const tmp = `.skillhub-tmp-${repoName}`
-  const skillName = folderPath.split('/').pop()!
 
+  // Handle root directory case (empty folderPath)
+  const isRootDir = !folderPath || folderPath === '.'
+  const skillName = isRootDir ? repoName : folderPath.split('/').pop()!
+
+  // For root directory, clone the entire repo without sparse-checkout
+  if (isRootDir) {
+    switch (shell) {
+      case 'powershell':
+        return `git clone --depth=1 ${repoUrl} ${skillName}`
+      case 'cmd':
+        return `git clone --depth=1 ${repoUrl} ${skillName}`
+      default:
+        return `git clone --depth=1 ${repoUrl} ${skillName}`
+    }
+  }
+
+  // For subdirectory, use sparse-checkout
   switch (shell) {
     case 'powershell':
       return `git clone --filter=blob:none --no-checkout --depth=1 ${repoUrl} ${tmp}; cd ${tmp}; git sparse-checkout init --no-cone; git sparse-checkout set ${folderPath}; git checkout; Copy-Item -Recurse ${folderPath.replace(/\//g, '\\')} ..\\${skillName}; cd ..; Remove-Item -Recurse -Force ${tmp}`
@@ -54,11 +70,27 @@ export function generateGroupCommand(
   shell: ShellType = 'bash',
 ): string {
   const tmp = `.skillhub-tmp-${repoName}`
-  const paths = folderPaths.join(' ')
+
+  // Filter out empty paths and normalize
+  const validPaths = folderPaths.filter(p => p && p !== '.')
+
+  // If all paths are root or empty, clone the entire repo
+  if (validPaths.length === 0) {
+    switch (shell) {
+      case 'powershell':
+        return `git clone --depth=1 ${repoUrl} ${repoName}`
+      case 'cmd':
+        return `git clone --depth=1 ${repoUrl} ${repoName}`
+      default:
+        return `git clone --depth=1 ${repoUrl} ${repoName}`
+    }
+  }
+
+  const paths = validPaths.join(' ')
 
   switch (shell) {
     case 'powershell': {
-      const copyParts = folderPaths
+      const copyParts = validPaths
         .map(p => {
           const name = p.split('/').pop()!
           return `Copy-Item -Recurse ${p.replace(/\//g, '\\')} ..\\${name}`
@@ -67,7 +99,7 @@ export function generateGroupCommand(
       return `git clone --filter=blob:none --no-checkout --depth=1 ${repoUrl} ${tmp}; cd ${tmp}; git sparse-checkout init --no-cone; git sparse-checkout set ${paths}; git checkout; ${copyParts}; cd ..; Remove-Item -Recurse -Force ${tmp}`
     }
     case 'cmd': {
-      const copyParts = folderPaths
+      const copyParts = validPaths
         .map(p => {
           const name = p.split('/').pop()!
           return `xcopy /E /I /Q ${p.replace(/\//g, '\\')} ..\\${name}\\`
@@ -76,7 +108,7 @@ export function generateGroupCommand(
       return `git clone --filter=blob:none --no-checkout --depth=1 ${repoUrl} ${tmp} && cd ${tmp} && git sparse-checkout init --no-cone && git sparse-checkout set ${paths} && git checkout && ${copyParts} && cd .. && rmdir /s /q ${tmp}`
     }
     default: {
-      const copyParts = folderPaths
+      const copyParts = validPaths
         .map(p => {
           const name = p.split('/').pop()!
           return `cp -r ${p} ../${name}`
