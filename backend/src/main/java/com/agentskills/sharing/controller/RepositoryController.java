@@ -106,7 +106,23 @@ public class RepositoryController {
             throw new SecurityException("无权操作此仓库");
         }
 
+        // Manually cascade delete: Skills -> SkillGroup -> Repository
+        skillGroupRepository.findByRepositoryId(repo.getId()).ifPresent(skillGroup -> {
+            // Delete all skills in this group first
+            List<com.agentskills.sharing.entity.Skill> skills =
+                    skillRepository.findBySkillGroupId(skillGroup.getId());
+            skillRepository.deleteAll(skills);
+            log.info("Deleted {} skills for repository {}", skills.size(), repo.getId());
+
+            // Then delete the skill group
+            skillGroupRepository.delete(skillGroup);
+            log.info("Deleted skill group {} for repository {}", skillGroup.getId(), repo.getId());
+        });
+
+        // Finally delete the repository
         repositoryRepository.delete(repo);
+        log.info("Deleted repository {}", repo.getId());
+
         return ResponseEntity.noContent().build();
     }
 
